@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, CheckCircle2, Circle, Trash2, Edit3 } from 'lucide-react';
 
 interface Todo {
   id: number;
   text: string;
   completed: boolean;
+  date: string; // Add a date field
 }
 
 function App() {
@@ -12,16 +13,34 @@ function App() {
   const [input, setInput] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
 
+  // Load tasks from local storage on initial render
+  useEffect(() => {
+    const storedTodos = JSON.parse(localStorage.getItem('todos') || '[]');
+    setTodos(storedTodos);
+  }, []);
+
+  // Save tasks to local storage whenever they change
+  useEffect(() => {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }, [todos]);
+
   const addTodo = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
+      const newTodo = {
+        id: Date.now(),
+        text: input,
+        completed: false,
+        date: new Date().toLocaleDateString(), // Capture the current date
+      };
+
       if (editingId !== null) {
         setTodos(todos.map(todo =>
           todo.id === editingId ? { ...todo, text: input } : todo
         ));
         setEditingId(null);
       } else {
-        setTodos([...todos, { id: Date.now(), text: input, completed: false }]);
+        setTodos([...todos, newTodo]);
       }
       setInput('');
     }
@@ -99,11 +118,14 @@ function App() {
               >
                 {todo.completed ? <CheckCircle2 size={24} /> : <Circle size={24} />}
               </button>
-              <span
-                className={`flex-1 text-lg ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}
-              >
-                {todo.text}
-              </span>
+              <div className="flex-1">
+                <span
+                  className={`text-lg ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}
+                >
+                  {todo.text}
+                </span>
+                <div className="text-sm text-gray-400">{todo.date}</div> {/* Display date */}
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => startEditing(todo)}
@@ -132,3 +154,4 @@ function App() {
 }
 
 export default App;
+
